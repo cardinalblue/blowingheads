@@ -31,10 +31,11 @@
       
       // Config
       var fbIDs  = {};
-      var baseHeadDimension     = 50;
-      var reductionTime         = 3;
-      var sizeEnlargementFactor = 2
-      var heightBump            = 2;
+      var baseHeadDimension      = 50;
+      var reductionTime          = 3;
+      var sizeEnlargementFactor  = 2
+      var heightBump             = 2;
+      var widthLimitForExplosion = 500;
       
       firebase.authWithOAuthPopup("facebook", function(error, authData) {
         if (error) {
@@ -87,7 +88,7 @@
         var h         = $head.height();
         var marginTop = $head.css('margin-top');
         
-        if (w > 600) {
+        if (w > widthLimitForExplosion) {
           explodeHead(fbID);
         }
         
