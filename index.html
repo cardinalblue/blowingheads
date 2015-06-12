@@ -4,8 +4,23 @@
     <script src='https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js'></script>
     
     <style>
+      body {
+        -moz-transform: rotate(180deg);
+        -webkit-transform: rotate(180deg);
+        -ms-transform: rotate(180deg);
+        -o-transform: rotate(180deg);
+        transform: rotate(180deg);
+      }
       .head {
         border-radius: 50%;
+        position: relative;
+        vertical-align: top;
+        
+        -moz-transform: rotate(180deg);
+        -webkit-transform: rotate(180deg);
+        -ms-transform: rotate(180deg);
+        -o-transform: rotate(180deg);
+        transform: rotate(180deg);
       }
     </style>
   </head>
@@ -15,8 +30,10 @@
       
       // Config
       var fbIDs  = {};
-      var baseHeadDimension   = 50;
-      var sizeReductionTime   = 1;
+      var baseHeadDimension     = 50;
+      var reductionTime         = 3;
+      var sizeEnlargementFactor = 2
+      var heightBump            = 2;
       
       firebase.authWithOAuthPopup("facebook", function(error, authData) {
         if (error) {
@@ -64,12 +81,14 @@
       }
       
       function enlargeHead(fbID) {
-        var $head = $('#' + fbID);
-        var w = $head.width();
-        var h = $head.height();
+        var $head     = $('#' + fbID);
+        var w         = $head.width();
+        var h         = $head.height();
+        var marginTop = $head.css('margin-top');
         
         $head.width(w+1);
         $head.height(h+1);
+        $head.css('margin-top', marginTop + heightBump)
       }
       
       function reduceHeadSizes() {
@@ -82,26 +101,24 @@
             if (diff < 0) {
               $head.width(baseHeadDimension);
               $head.height(baseHeadDimension);
+              $head.css('margin-top', 0)
             } else {
-              $head.width(baseHeadDimension  + diff/sizeReductionTime);
-              $head.height(baseHeadDimension + diff/sizeReductionTime);
+              var reductionFactor = diff / reductionTime;
+              
+              $head.width(baseHeadDimension  + reductionFactor * sizeEnlargementFactor);
+              $head.height(baseHeadDimension + reductionFactor * sizeEnlargementFactor);
+              $head.css('margin-top', reductionFactor * heightBump);
             }
           }
         }
       }
       
       $(document).on('click', '.head', function() {
-        var fbID = $(this).attr('id');
-        var diff = fbIDs[fbID] - getCurrentTimestamp();
-        var newT;
-        
-        if (diff < 0) {
-          newT = getCurrentTimestamp() + sizeReductionTime;
-        }
-        else {
-          newT = fbIDs[fbID] + sizeReductionTime;
-        }
-        
+        var fbID     = $(this).attr('id');
+        var diff     = fbIDs[fbID] - getCurrentTimestamp();
+        var currentT = diff < 0 ? getCurrentTimestamp() : fbIDs[fbID]
+        var newT     = currentT + reductionTime;
+
         firebase.push({type: 'click', fbID: fbID, t: newT});
       });
       
