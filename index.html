@@ -1,0 +1,115 @@
+<html>
+  <head>
+    <script src='https://cdn.firebase.com/js/client/2.2.1/firebase.js'></script>
+    <script src='https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js'></script>
+    
+    <style>
+      .head {
+        border-radius: 50%;
+      }
+    </style>
+  </head>
+  <body>
+    <script>
+      var firebase = new Firebase('https://blowingheads.firebaseio.com/');
+      
+      // Config
+      var fbIDs  = {};
+      var baseHeadDimension   = 50;
+      var lowestHeadDimension = 25;
+      var sizeReductionTime   = 1;
+      var magicFactor = (lowestHeadDimension-baseHeadDimension)/sizeReductionTime;
+      
+      firebase.authWithOAuthPopup("facebook", function(error, authData) {
+        if (error) {
+          console.log("Login Failed!", error);
+        } else {
+          console.log("Authenticated successfully with payload:", authData);
+          firebase.push({type: 'newUser', fbID: authData.facebook.id, t: getCurrentTimestamp()});
+        }
+      });
+      
+      firebase.on('child_added', function(snapshot) {
+        var msg = snapshot.val();
+        
+        switch(msg.type) {
+          case 'newUser':
+            if (!fbIDs[msg.fbID]) {
+              fbIDs[msg.fbID] = msg.t;
+              addHead(msg.fbID);
+            }
+            break;
+          case 'click':
+            if (fbIDs[msg.fbID]) {
+              if (fbIDs[msg.fbID]) {
+                fbIDs[msg.fbID] = msg.t;
+              }
+              enlargeHead(msg.fbID);
+            }
+            break;
+        }
+        
+      });
+      
+      function getCurrentTimestamp() {
+        return Math.floor(new Date().getTime() / 1000);
+      }
+      
+      function addHead(fbID) {
+        var img = new Image();
+        img.src = "http://graph.facebook.com/"+ fbID +"/picture?type=large";
+        var $img = $(img);
+        $img.addClass('head');
+        $img.attr('id', fbID);
+        $img.css({width: baseHeadDimension, height: baseHeadDimension});
+        $('body').append($img);
+      }
+      
+      function enlargeHead(fbID) {
+        var $head = $('#' + fbID);
+        var w = $head.width();
+        var h = $head.height();
+        
+        $head.width(w+1);
+        $head.height(h+1);
+      }
+      
+      function reduceHeadSizes() {
+        for (var fbID in fbIDs) {
+          if (fbIDs.hasOwnProperty(fbID)) {
+            var $head = $('#' + fbID);
+            var t     = fbIDs[fbID];
+            var diff  = t - getCurrentTimestamp();
+            
+            console.log(diff);
+              
+            if (diff < magicFactor) {
+              $head.width(lowestHeadDimension);
+              $head.height(lowestHeadDimension);
+            } else {
+              $head.width(lowestHeadDimension  + diff/sizeReductionTime);
+              $head.height(lowestHeadDimension + diff/sizeReductionTime);
+            }
+          }
+        }
+      }
+      
+      $(document).on('click', '.head', function() {
+        var fbID = $(this).attr('id');
+        
+        var diff = fbIDs[fbID] - getCurrentTimestamp();
+        if (diff < 0) {
+          var newT = getCurrentTimestamp() + sizeReductionTime;
+        }
+        else {
+          var newT = fbIDs[fbID] + sizeReductionTime;
+        }
+        
+        firebase.push({type: 'click', fbID: fbID, t: newT});
+      });
+      
+      setInterval(reduceHeadSizes, 1000);
+      
+    </script>
+  </body>
+</html>
