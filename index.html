@@ -2,6 +2,7 @@
   <head>
     <script src='https://cdn.firebase.com/js/client/2.2.1/firebase.js'></script>
     <script src='https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js'></script>
+    <script src='http://adameivy.com/jquery.imgExplosion/jquery.imgexplosion.js'></script>
     
     <style>
       body {
@@ -86,6 +87,10 @@
         var h         = $head.height();
         var marginTop = $head.css('margin-top');
         
+        if (w > 600) {
+          explodeHead(fbID);
+        }
+        
         $head.width(w+1);
         $head.height(h+1);
         $head.css('margin-top', marginTop + heightBump)
@@ -94,23 +99,33 @@
       function reduceHeadSizes() {
         for (var fbID in fbIDs) {
           if (fbIDs.hasOwnProperty(fbID)) {
-            var $head = $('#' + fbID);
-            var t     = fbIDs[fbID];
-            var diff  = t - getCurrentTimestamp();
+            var $head           = $('#' + fbID);
+            var t               = fbIDs[fbID];
+            var diff            = t - getCurrentTimestamp();
+            var reductionFactor = diff < 0 ? 0 : diff / reductionTime;
               
-            if (diff < 0) {
-              $head.width(baseHeadDimension);
-              $head.height(baseHeadDimension);
-              $head.css('margin-top', 0)
-            } else {
-              var reductionFactor = diff / reductionTime;
-              
-              $head.width(baseHeadDimension  + reductionFactor * sizeEnlargementFactor);
-              $head.height(baseHeadDimension + reductionFactor * sizeEnlargementFactor);
-              $head.css('margin-top', reductionFactor * heightBump);
-            }
+            $head.width(baseHeadDimension  + reductionFactor * sizeEnlargementFactor);
+            $head.height(baseHeadDimension + reductionFactor * sizeEnlargementFactor);
+            $head.css('margin-top', reductionFactor * heightBump/2);
           }
         }
+      }
+      
+      function explodeHead(fbID) {
+        $head = $('#' + fbID);
+        $head.hide();
+        $head.imgExplosion({
+          angle:       true,
+          centerOn:    this,
+          interval:    1.5,
+          minThrow:    1000,
+          maxThrow:    2500,
+          angle:       true,
+          explode:     true,
+          extraWidth:  200,
+          rotateSpeed: 20,
+          num:         1000,
+        });
       }
       
       $(document).on('click', '.head', function() {
