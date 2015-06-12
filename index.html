@@ -16,9 +16,7 @@
       // Config
       var fbIDs  = {};
       var baseHeadDimension   = 50;
-      var lowestHeadDimension = 25;
       var sizeReductionTime   = 1;
-      var magicFactor = (lowestHeadDimension-baseHeadDimension)/sizeReductionTime;
       
       firebase.authWithOAuthPopup("facebook", function(error, authData) {
         if (error) {
@@ -80,15 +78,13 @@
             var $head = $('#' + fbID);
             var t     = fbIDs[fbID];
             var diff  = t - getCurrentTimestamp();
-            
-            console.log(diff);
               
-            if (diff < magicFactor) {
-              $head.width(lowestHeadDimension);
-              $head.height(lowestHeadDimension);
+            if (diff < 0) {
+              $head.width(baseHeadDimension);
+              $head.height(baseHeadDimension);
             } else {
-              $head.width(lowestHeadDimension  + diff/sizeReductionTime);
-              $head.height(lowestHeadDimension + diff/sizeReductionTime);
+              $head.width(baseHeadDimension  + diff/sizeReductionTime);
+              $head.height(baseHeadDimension + diff/sizeReductionTime);
             }
           }
         }
@@ -96,13 +92,14 @@
       
       $(document).on('click', '.head', function() {
         var fbID = $(this).attr('id');
-        
         var diff = fbIDs[fbID] - getCurrentTimestamp();
+        var newT;
+        
         if (diff < 0) {
-          var newT = getCurrentTimestamp() + sizeReductionTime;
+          newT = getCurrentTimestamp() + sizeReductionTime;
         }
         else {
-          var newT = fbIDs[fbID] + sizeReductionTime;
+          newT = fbIDs[fbID] + sizeReductionTime;
         }
         
         firebase.push({type: 'click', fbID: fbID, t: newT});
